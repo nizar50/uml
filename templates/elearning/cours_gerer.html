@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Gérer {{ cours.titre }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div><h2 class="mb-0">{{ cours.titre }}</h2><span class="text-muted">{{ cours.get_niveau_display }}</span></div>
+  <div>
+    <a class="btn btn-outline-primary" href="{% url 'cours_stats' cours.pk %}">Statistiques</a>
+    <a class="btn btn-outline-secondary" href="{% url 'objet_modifier' 'cours' cours.pk %}">Modifier</a>
+    <a class="btn btn-outline-danger" href="{% url 'objet_supprimer' 'cours' cours.pk %}">Supprimer</a>
+  </div>
+</div>
+<a class="btn btn-success mb-3" href="{% url 'chapitre_creer' cours.pk %}">+ Ajouter un chapitre</a>
+
+{% for chap in chapitres %}
+<div class="card mb-3 shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>Chapitre {{ chap.ordre }} : {{ chap.titre }}</strong>
+    <span>
+      <a class="btn btn-sm btn-outline-success" href="{% url 'lecon_creer' chap.pk %}">+ Leçon</a>
+      <a class="btn btn-sm btn-outline-success" href="{% url 'quiz_creer' chap.pk %}">+ Quiz</a>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'objet_modifier' 'chapitre' chap.pk %}">Modifier</a>
+      <a class="btn btn-sm btn-outline-danger" href="{% url 'objet_supprimer' 'chapitre' chap.pk %}">Supprimer</a>
+    </span>
+  </div>
+  <div class="card-body">
+    <h6 class="text-muted">Leçons</h6>
+    {% for lec in chap.lecons.all %}
+      <div class="border rounded p-2 mb-2">
+        <div class="d-flex justify-content-between">
+          <span>{{ lec.ordre }}. {{ lec.titre }} <small class="text-muted">({{ lec.duree_estimee }} min)</small></span>
+          <span>
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'ressource_ajouter' lec.pk %}">+ Ressource</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'objet_modifier' 'lecon' lec.pk %}">Modifier</a>
+            <a class="btn btn-sm btn-outline-danger" href="{% url 'objet_supprimer' 'lecon' lec.pk %}">Supprimer</a>
+          </span>
+        </div>
+        {% for r in lec.ressources.all %}
+          <div class="small ms-3 mt-1">
+            <span class="badge bg-secondary">{{ r.get_type_display }}</span>
+            <span class="badge bg-info text-dark">{{ r.get_niveau_display }}</span>
+            <a href="{{ r.fichier.url }}" target="_blank">{{ r.titre }}</a>
+            <a class="text-danger ms-2" href="{% url 'objet_supprimer' 'ressource' r.pk %}">supprimer</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% empty %}<p class="text-muted small">Aucune leçon.</p>{% endfor %}
+
+    <h6 class="text-muted mt-3">Quiz</h6>
+    {% for q in chap.quiz.all %}
+      <div class="d-flex justify-content-between border rounded p-2 mb-2">
+        <span>{{ q.titre }} <span class="badge bg-info text-dark">{{ q.get_niveau_display }}</span>
+          <small class="text-muted">{{ q.questions.all|length }} question{{ q.questions.all|length|pluralize }}</small></span>
+        <span>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'quiz_gerer' q.pk %}">Questions</a>
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'objet_modifier' 'quiz' q.pk %}">Modifier</a>
+          <a class="btn btn-sm btn-outline-danger" href="{% url 'objet_supprimer' 'quiz' q.pk %}">Supprimer</a>
+        </span>
+      </div>
+    {% empty %}<p class="text-muted small">Aucun quiz.</p>{% endfor %}
+  </div>
+</div>
+{% empty %}
+  <p class="text-muted">Commencez par ajouter un chapitre.</p>
+{% endfor %}
+{% endblock %}

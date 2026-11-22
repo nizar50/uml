@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ lecon.titre }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{% url 'cours_detail' cours.pk %}">{{ cours.titre }}</a></li>
+  <li class="breadcrumb-item">{{ lecon.chapitre.titre }}</li>
+  <li class="breadcrumb-item active">{{ lecon.titre }}</li>
+</ol></nav>
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <h3>{{ lecon.titre }}</h3>
+  <div style="white-space: pre-line;">{{ lecon.contenu }}</div>
+</div></div>
+
+{% if ressources %}
+<div class="card mb-3"><div class="card-header">Ressources</div>
+  <ul class="list-group list-group-flush">
+    {% for r in ressources %}
+    <li class="list-group-item d-flex justify-content-between">
+      <a href="{{ r.fichier.url }}" target="_blank">{{ r.titre }}</a>
+      <span><span class="badge bg-secondary">{{ r.get_type_display }}</span> <span class="badge bg-info text-dark">{{ r.get_niveau_display }}</span></span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="d-flex justify-content-between mb-3">
+  {% if precedente %}<a class="btn btn-outline-secondary" href="{% url 'lecon_detail' precedente.pk %}">&larr; {{ precedente.titre }}</a>{% else %}<span></span>{% endif %}
+  {% if suivante %}<a class="btn btn-primary" href="{% url 'lecon_detail' suivante.pk %}">{{ suivante.titre }} &rarr;</a>{% endif %}
+</div>
+
+{% if quiz %}
+<div class="card border-primary"><div class="card-body">
+  <strong>Testez vos connaissances :</strong>
+  {% for q in quiz %}<a class="btn btn-sm btn-outline-primary ms-1" href="{% url 'quiz_passer' q.pk %}">{{ q.titre }} ({{ q.get_niveau_display }})</a>{% endfor %}
+</div></div>
+{% endif %}
+
+<div id="tracker-config" data-lecon="{{ lecon.pk }}" data-url="{% url 'api_suivi' %}"
+     data-seuil="{{ seuil_inactivite }}" data-csrf="{{ csrf_token }}"></div>
+{% endblock %}
+{% block scripts %}{% load static %}<script src="{% static 'js/tracker.js' %}"></script>{% endblock %}

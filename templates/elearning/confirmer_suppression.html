@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card border-danger"><div class="card-body">
+  <h4>Supprimer « {{ objet }} » ?</h4>
+  <p>Cette action supprime aussi tous les éléments liés. Elle est définitive.</p>
+  <form method="post">{% csrf_token %}
+    <button class="btn btn-danger">Oui, supprimer</button>
+    <a class="btn btn-outline-secondary" href="{{ retour }}">Annuler</a>
+  </form>
+</div></div>
+{% endblock %}

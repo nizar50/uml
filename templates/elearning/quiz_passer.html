@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.titre }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0">{{ quiz.titre }}</h3>
+    <span class="text-muted">{{ quiz.chapitre.titre }} - niveau {{ quiz.get_niveau_display }} - tentative n°{{ tentative.numero }}</span>
+  </div>
+  <div class="text-end">
+    <div class="fs-4 fw-bold" id="chrono" data-reste="{{ reste }}">--:--</div>
+    <small class="text-muted">temps restant</small>
+  </div>
+</div>
+
+<form method="post" id="quiz-form">{% csrf_token %}
+  <input type="hidden" name="tentative_id" value="{{ tentative.pk }}">
+  {% for q in questions %}
+  <div class="card mb-3 shadow-sm"><div class="card-body">
+    <p class="fw-bold">{{ forloop.counter }}. {{ q.enonce }} <span class="badge bg-secondary">{{ q.points }} pt{{ q.points|pluralize }}</span></p>
+    {% for c in q.choix.all %}
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="q_{{ q.id }}" id="c{{ c.id }}" value="{{ c.id }}">
+        <label class="form-check-label" for="c{{ c.id }}">{{ c.texte }}</label>
+      </div>
+    {% endfor %}
+    <input type="hidden" name="t_{{ q.id }}" id="t_{{ q.id }}" value="0">
+  </div></div>
+  {% endfor %}
+  <button class="btn btn-primary btn-lg">Valider mes réponses</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+  // temps de réponse par question (secondes écoulées entre deux réponses)
+  var dernier = Date.now();
+  document.querySelectorAll('input[type=radio]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      var qid = r.name.substring(2);
+      var champ = document.getElementById('t_' + qid);
+      var maintenant = Date.now();
+      champ.value = (parseInt(champ.value, 10) || 0) + Math.round((maintenant - dernier) / 1000);
+      dernier = maintenant;
+    });
+  });
+  // compte à rebours : envoi automatique à la fin du temps
+  var chrono = document.getElementById('chrono');
+  var reste = parseInt(chrono.dataset.reste, 10);
+  function afficher() {
+    var m = Math.floor(reste / 60), s = reste % 60;
+    chrono.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  afficher();
+  setInterval(function () {
+    reste--;
+    if (reste <= 0) { document.getElementById('quiz-form').submit(); return; }
+    afficher();
+  }, 1000);
+</script>
+{% endblock %}

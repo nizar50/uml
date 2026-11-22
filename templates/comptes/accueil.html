@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm text-center">
+  <h1 class="display-5 fw-bold">Plateforme e-learning adaptative</h1>
+  <p class="lead">Des parcours qui s'adaptent à votre rythme grâce au suivi de votre comportement d'apprentissage.</p>
+  <a class="btn btn-primary btn-lg me-2" href="{% url 'connexion' %}">Se connecter</a>
+  <a class="btn btn-outline-primary btn-lg" href="{% url 'inscription' %}">Créer un compte</a>
+</div>
+<div class="row text-center">
+  <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Apprenant</h5><p>Suivez les cours, passez des quiz et consultez vos recommandations personnalisées.</p></div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Enseignant</h5><p>Créez vos cours et quiz, repérez les apprenants en difficulté grâce aux statistiques.</p></div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Administrateur</h5><p>Gérez les utilisateurs, les rôles et les seuils d'adaptation.</p></div></div></div>
+</div>
+{% endblock %}

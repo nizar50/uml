@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Questions - {{ quiz.titre }}{% endblock %}
+{% block content %}
+<a href="{% url 'cours_gerer' quiz.chapitre.cours_id %}">&larr; Retour au cours</a>
+<h3 class="mt-2">{{ quiz.titre }} <span class="badge bg-info text-dark">{{ quiz.get_niveau_display }}</span></h3>
+<p class="text-muted">Note minimale {{ quiz.note_min|floatformat:0 }} % - durée {{ quiz.duree_max }} min</p>
+
+<div class="row">
+  <div class="col-lg-6">
+    <h5>Questions ({{ questions|length }})</h5>
+    {% for q in questions %}
+      <div class="card mb-2"><div class="card-body py-2">
+        <div class="d-flex justify-content-between">
+          <strong>{{ forloop.counter }}. {{ q.enonce }}</strong>
+          <a class="text-danger small" href="{% url 'objet_supprimer' 'question' q.pk %}">supprimer</a>
+        </div>
+        <small class="text-muted">Difficulté {{ q.difficulte }} - {{ q.points }} pt{{ q.points|pluralize }}</small>
+        <ul class="mb-0">
+          {% for c in q.choix.all %}<li class="{% if c.est_correct %}text-success fw-bold{% endif %}">{{ c.texte }}</li>{% endfor %}
+        </ul>
+      </div></div>
+    {% empty %}<p class="text-muted">Aucune question.</p>{% endfor %}
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm"><div class="card-body">
+      <h5>Ajouter une question</h5>
+      <form method="post">{% csrf_token %}
+        {% include "elearning/_form.html" %}
+        <button class="btn btn-primary">Ajouter</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

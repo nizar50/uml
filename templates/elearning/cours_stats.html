@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Statistiques - {{ cours.titre }}{% endblock %}
+{% block content %}
+<a href="{% url 'cours_gerer' cours.pk %}">&larr; Gérer le cours</a>
+<h2 class="mt-2 mb-3">Statistiques : {{ cours.titre }}</h2>
+
+<div class="row">
+  <div class="col-lg-4 mb-3"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h6>Score moyen par quiz (%)</h6><canvas id="gQuiz"></canvas>
+  </div></div></div>
+  <div class="col-lg-4 mb-3"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h6>Temps moyen par leçon (min / apprenant)</h6><canvas id="gLecons"></canvas>
+  </div></div></div>
+  <div class="col-lg-4 mb-3"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h6>Profils des apprenants</h6><canvas id="gProfils"></canvas>
+  </div></div></div>
+</div>
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <h5>Apprenants et profils <small class="text-muted">(classement automatique par Scikit-learn)</small></h5>
+  <div class="table-responsive"><table class="table table-sm align-middle">
+    <thead><tr><th>Apprenant</th><th>Profil</th><th>Moyenne</th><th>Tentatives</th><th>Temps actif</th><th>Inactivité</th></tr></thead>
+    <tbody>
+    {% for p in profils %}
+      <tr>
+        <td>{{ p.apprenant.nom_complet }}</td>
+        <td><span class="badge {% if p.profil == 'En difficulté' %}bg-danger{% elif p.profil == 'Performant' %}bg-success{% elif p.profil == 'Intermédiaire' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ p.profil }}</span></td>
+        <td>{{ p.moyenne|default_if_none:"-" }}</td>
+        <td>{{ p.tentatives }}</td>
+        <td>{{ p.temps_min }} min</td>
+        <td>{% widthratio p.ratio_inactivite 1 100 %} %</td>
+      </tr>
+    {% empty %}<tr><td colspan="6" class="text-muted">Aucun apprenant inscrit.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div></div>
+
+<div class="card border-danger shadow-sm"><div class="card-body">
+  <h5>Apprenants en difficulté</h5>
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Apprenant</th><th>Chapitre</th><th>Gravité</th><th>Motif</th></tr></thead>
+    <tbody>
+    {% for d in difficultes %}
+      <tr><td>{{ d.apprenant.nom_complet }}</td><td>{{ d.chapitre.titre }}</td><td>{{ d.niveau }}/3</td><td>{{ d.motif }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">Aucune difficulté détectée.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div></div>
+
+{{ donnees|json_script:"donnees" }}
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  var d = JSON.parse(document.getElementById('donnees').textContent);
+  new Chart(document.getElementById('gQuiz'), {
+    type: 'bar',
+    data: {labels: d.quiz.labels, datasets: [{label: 'Score moyen (%)', data: d.quiz.values, backgroundColor: '#0d6efd'}]},
+    options: {scales: {y: {min: 0, max: 100}}, plugins: {legend: {display: false}}}
+  });
+  new Chart(document.getElementById('gLecons'), {
+    type: 'bar',
+    data: {labels: d.lecons.labels, datasets: [{label: 'Minutes', data: d.lecons.values, backgroundColor: '#20c997'}]},
+    options: {plugins: {legend: {display: false}}}
+  });
+  new Chart(document.getElementById('gProfils'), {
+    type: 'doughnut',
+    data: {labels: d.profils.labels, datasets: [{data: d.profils.values, backgroundColor: ['#dc3545', '#ffc107', '#198754', '#6c757d']}]}
+  });
+</script>
+{% endblock %}

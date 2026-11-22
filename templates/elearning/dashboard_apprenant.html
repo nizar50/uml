@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Mon tableau de bord{% endblock %}
+{% block content %}
+<h2 class="mb-3">Mon tableau de bord</h2>
+
+{% if not inscriptions %}
+  <div class="alert alert-info">Vous n'êtes inscrit à aucun cours. <a href="{% url 'catalogue' %}">Consultez le catalogue</a>.</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-6 mb-3"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h6>Évolution de mes scores (%)</h6><canvas id="gScores"></canvas>
+  </div></div></div>
+  <div class="col-lg-6 mb-3"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h6>Temps actif par leçon (minutes)</h6><canvas id="gTemps"></canvas>
+  </div></div></div>
+  <div class="col-lg-12 mb-3"><div class="card shadow-sm"><div class="card-body">
+    <h6>Progression par cours (%)</h6><canvas id="gProg" height="70"></canvas>
+  </div></div></div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6 mb-3"><div class="card h-100 border-primary"><div class="card-body">
+    <h5>Recommandations pour moi</h5>
+    {% for r in recommandations %}
+      <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+        <div>
+          <span class="badge {% if r.type == 'AVANCE' %}bg-success{% elif r.type == 'REVISION' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">{{ r.get_type_display }}</span>
+          <small>{{ r.motif }}{% if r.ressource %} - <em>{{ r.ressource.titre }}</em>{% endif %}</small>
+        </div>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'reco_suivre' r.pk %}">Ouvrir</a>
+      </div>
+    {% empty %}
+      <p class="text-muted mb-0">Aucune recommandation pour le moment. Continuez à travailler !</p>
+    {% endfor %}
+  </div></div></div>
+
+  <div class="col-lg-6 mb-3"><div class="card h-100 border-danger"><div class="card-body">
+    <h5>Difficultés détectées</h5>
+    {% for r in difficultes %}
+      <div class="border-bottom py-2">
+        <strong>{{ r.chapitre.titre }}</strong> <small class="text-muted">({{ r.chapitre.cours.titre }})</small>
+        <span class="badge bg-danger">niveau {{ r.difficulte }}/3</span><br>
+        <small>{{ r.motif }}</small>
+      </div>
+    {% empty %}
+      <p class="text-muted mb-0">Aucune difficulté détectée.</p>
+    {% endfor %}
+  </div></div></div>
+</div>
+
+<div class="card shadow-sm"><div class="card-body">
+  <h5>Détail par chapitre</h5>
+  <div class="table-responsive"><table class="table table-sm align-middle">
+    <thead><tr><th>Chapitre</th><th>Tentatives</th><th>Moyenne</th><th>Dernier score</th><th>Temps actif</th><th>Inactivité</th><th>Niveau conseillé</th><th></th></tr></thead>
+    <tbody>
+    {% for r in resultats %}
+      <tr>
+        <td>{{ r.chapitre.titre }}<br><small class="text-muted">{{ r.chapitre.cours.titre }}</small></td>
+        <td>{{ r.nb_tentatives }}</td>
+        <td>{{ r.moyenne|default_if_none:"-" }}</td>
+        <td>{{ r.derniere|default_if_none:"-" }}</td>
+        <td>{{ r.temps_min }} min</td>
+        <td>{% widthratio r.ratio_inactivite 1 100 %} %</td>
+        <td>{{ r.niveau_label }}</td>
+        <td>{% if r.quiz_recommande %}<a class="btn btn-sm btn-primary" href="{% url 'quiz_passer' r.quiz_recommande.pk %}">Quiz conseillé</a>{% endif %}</td>
+      </tr>
+    {% empty %}<tr><td colspan="8" class="text-muted">Aucune donnée.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div></div>
+
+{{ donnees|json_script:"donnees" }}
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  var d = JSON.parse(document.getElementById('donnees').textContent);
+  new Chart(document.getElementById('gScores'), {
+    type: 'line',
+    data: {labels: d.scores.labels, datasets: [{label: 'Score (%)', data: d.scores.values, borderColor: '#0d6efd', tension: .25, fill: false}]},
+    options: {scales: {y: {min: 0, max: 100}}}
+  });
+  new Chart(document.getElementById('gTemps'), {
+    type: 'bar',
+    data: {labels: d.temps.labels, datasets: [{label: 'Minutes', data: d.temps.values, backgroundColor: '#20c997'}]},
+    options: {plugins: {legend: {display: false}}}
+  });
+  new Chart(document.getElementById('gProg'), {
+    type: 'bar',
+    data: {labels: d.progression.labels, datasets: [{label: 'Progression (%)', data: d.progression.values, backgroundColor: '#6f42c1'}]},
+    options: {indexAxis: 'y', scales: {x: {min: 0, max: 100}}, plugins: {legend: {display: false}}}
+  });
+</script>
+{% endblock %}

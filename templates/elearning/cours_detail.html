@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ cours.titre }}{% endblock %}
+{% block content %}
+<h2>{{ cours.titre }}</h2>
+<p class="text-muted">Par {{ cours.enseignant.nom_complet }} - {{ cours.get_niveau_display }}</p>
+<p>{{ cours.description }}</p>
+
+{% if not inscription %}
+  <form method="post" action="{% url 'inscrire' cours.pk %}">{% csrf_token %}
+    <button class="btn btn-primary">S'inscrire à ce cours</button>
+  </form>
+{% else %}
+  <div class="progress mb-4" style="height: 22px;">
+    <div class="progress-bar" style="width: {{ inscription.progression }}%">{{ inscription.progression|floatformat:0 }} %</div>
+  </div>
+
+  {% for item in chapitres %}
+  <div class="card mb-3 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>Chapitre {{ item.chapitre.ordre }} : {{ item.chapitre.titre }}</strong>
+      {% if item.analyse.difficulte %}
+        <span class="badge bg-danger">Difficulté détectée</span>
+      {% elif item.analyse.nb_tentatives %}
+        <span class="badge bg-success">Moyenne {{ item.analyse.moyenne }} %</span>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <h6 class="text-muted">Leçons</h6>
+      <ul class="list-group mb-3">
+        {% for lec, vue in item.lecons %}
+          <li class="list-group-item d-flex justify-content-between">
+            <a href="{% url 'lecon_detail' lec.pk %}">{{ lec.titre }}</a>
+            <span>{% if vue %}<span class="badge bg-success">Vue</span>{% endif %} <small class="text-muted">{{ lec.duree_estimee }} min</small></span>
+          </li>
+        {% empty %}<li class="list-group-item text-muted">Aucune leçon.</li>{% endfor %}
+      </ul>
+      {% if item.quiz %}
+        <h6 class="text-muted">Quiz</h6>
+        {% for q in item.quiz %}
+          <a class="btn btn-sm {% if item.analyse.quiz_recommande.id == q.id %}btn-primary{% else %}btn-outline-secondary{% endif %} me-1 mb-1" href="{% url 'quiz_passer' q.pk %}">
+            {{ q.titre }} ({{ q.get_niveau_display }}){% if item.analyse.quiz_recommande.id == q.id %} - recommandé{% endif %}
+          </a>
+        {% endfor %}
+      {% endif %}
+      {% if item.analyse.difficulte %}
+        <div class="alert alert-warning mt-3 mb-0 small">{{ item.analyse.motif }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+    <p class="text-muted">Ce cours n'a pas encore de contenu.</p>
+  {% endfor %}
+{% endif %}
+{% endblock %}
